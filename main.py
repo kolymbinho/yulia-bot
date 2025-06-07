@@ -50,8 +50,10 @@ if __name__ == "__main__":
 
     print("Бот запущен! Используем Webhook:", WEBHOOK_URL)
 
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),
-        webhook_url=WEBHOOK_URL
-    )
+app.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.getenv("PORT", 10000)),
+    url_path=TELEGRAM_TOKEN,
+    webhook_url=WEBHOOK_URL
+)
+
