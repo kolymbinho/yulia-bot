@@ -116,18 +116,9 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Бот запущен...")
-    app.run_polling()
-
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("Бот запущен! Используем Webhook:", WEBHOOK_URL)
-
-app.run_webhook(
-    listen="0.0.0.0",
-    port=int(os.getenv("PORT", 10000)),
-    url_path=TELEGRAM_TOKEN,
-    webhook_url=WEBHOOK_URL
-)
-
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=10000,
+        url_path=TELEGRAM_TOKEN,
+        webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    )
