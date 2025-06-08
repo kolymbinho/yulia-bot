@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 # Загружаем переменные из .env
@@ -11,7 +11,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL").strip()
 
-# ==== ХАРАКТЕРЫ ПЕРСОНАЖЕЙ ====
+# ХАРАКТЕРЫ
 characters = {
     "yulia": {
         "name": "Юля — политическая любовница",
@@ -75,7 +75,10 @@ characters = {
     }
 }
 
-# ==== GPT FUNCTION ====
+# Для хранения выбранных персонажей
+user_characters = {}
+
+# GPT
 def get_openai_response(prompt):
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -95,21 +98,33 @@ def get_openai_response(prompt):
     result = response.json()
     return result["choices"][0]["message"]["content"]
 
-# ==== /START ====
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Я Юлия Бот на GPT-4o. Напиши мне что-нибудь!")
+    keyboard = [[char["name"]] for char in characters.values()]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
 
-# ==== ОБРАБОТКА СООБЩЕНИЙ ====
+# Сообщения
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
     user_message = update.message.text
-    # По умолчанию Юля
-    character_prompt = characters["yulia"]["prompt"]
-    full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters['yulia']['name']}:"
-    print(f"Получено сообщение: {user_message}")  # для лога
+
+    # Если выбрал персонажа
+    for key, char in characters.items():
+        if user_message == char["name"]:
+            user_characters[user_id] = key
+            await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
+            return
+
+    # Если персонаж не выбран — Юля по умолчанию
+    character_key = user_characters.get(user_id, "yulia")
+    character_prompt = characters[character_key]["prompt"]
+    full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters[character_key]['name']}:"
+    print(f"Получено сообщение: {user_message}")  
     bot_response = get_openai_response(full_prompt)
     await update.message.reply_text(bot_response)
 
-# ==== ЗАПУСК ====
+# Запуск
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
