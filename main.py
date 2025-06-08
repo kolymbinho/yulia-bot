@@ -10,7 +10,7 @@ load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL").strip()
 
 # ==== ХАРАКТЕРЫ ПЕРСОНАЖЕЙ ====
 characters = {
@@ -105,6 +105,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # По умолчанию Юля
     character_prompt = characters["yulia"]["prompt"]
     full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters['yulia']['name']}:"
+    print(f"Получено сообщение: {user_message}")  # Лог для отладки
     bot_response = get_openai_response(full_prompt)
     await update.message.reply_text(bot_response)
 
@@ -125,8 +126,6 @@ def webhook():
 
 # Main run
 if __name__ == "__main__":
-    # Устанавливаем Webhook
-    bot.set_webhook(url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
-    print("Webhook установлен!")
-    # Запускаем Flask
+    print("Бот запущен! Ждёт сообщения...")
+    # НЕ ставим set_webhook() — будем ставить вручную через ссылку
     app_flask.run(host="0.0.0.0", port=10000)
