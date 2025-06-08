@@ -156,6 +156,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
     await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
 
+
 # Сообщения
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -179,6 +180,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Добавляем сообщение пользователя в историю
     user_histories[user_id].append({"role": "user", "content": user_message})
 
+    # ОГРАНИЧЕНИЕ истории (последние 10 сообщений)
+    if len(user_histories[user_id]) > 10:
+        user_histories[user_id] = user_histories[user_id][-10:]
+
     print(f"Получено сообщение: {user_message}")  
 
     # Получаем ответ GPT
@@ -187,7 +192,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Добавляем ответ бота в историю
     user_histories[user_id].append({"role": "assistant", "content": bot_response})
 
+    # ОГРАНИЧЕНИЕ истории снова (последние 10 сообщений)
+    if len(user_histories[user_id]) > 10:
+        user_histories[user_id] = user_histories[user_id][-10:]
+
     await update.message.reply_text(bot_response)
+
 
 
 # Запуск
