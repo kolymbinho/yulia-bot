@@ -1,8 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-from flask import Flask, request
-from telegram import Bot, Update
+from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 # Загружаем переменные из .env
@@ -96,36 +95,32 @@ def get_openai_response(prompt):
     result = response.json()
     return result["choices"][0]["message"]["content"]
 
-# ==== TELEGRAM HANDLERS ====
+# ==== /START ====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я Юлия Бот на GPT-4o. Напиши мне что-нибудь!")
 
+# ==== ОБРАБОТКА СООБЩЕНИЙ ====
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     # По умолчанию Юля
     character_prompt = characters["yulia"]["prompt"]
     full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters['yulia']['name']}:"
-    print(f"Получено сообщение: {user_message}")  # Лог для отладки
+    print(f"Получено сообщение: {user_message}")  # для лога
     bot_response = get_openai_response(full_prompt)
     await update.message.reply_text(bot_response)
 
-# ==== SETUP FLASK + TELEGRAM ====
-app_flask = Flask(__name__)
-bot = Bot(token=TELEGRAM_TOKEN)
-
-application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-application.add_handler(CommandHandler("start", start))
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-# Route for webhook
-@app_flask.route(f'/{TELEGRAM_TOKEN}', methods=['POST'])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    application.update_queue.put_nowait(update)
-    return 'ok'
-
-# Main run
+# ==== ЗАПУСК ====
 if __name__ == "__main__":
-    print("Бот запущен! Ждёт сообщения...")
-    # НЕ ставим set_webhook() — будем ставить вручную через ссылку
-    app_flask.run(host="0.0.0.0", port=10000)
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Бот запущен! Используем Webhook:", WEBHOOK_URL)
+
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", 10000)),
+        url_path=TELEGRAM_TOKEN,
+        webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    )
