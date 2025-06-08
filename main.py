@@ -107,22 +107,23 @@ user_characters = {}
 user_nsfw = {}
 
 # GPT
-def get_openai_response(prompt):
+def get_openai_response(character_prompt, history):
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
     }
+    messages = [{"role": "system", "content": character_prompt}] + history
+
     data = {
         "model": "gpt-4o",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
+        "messages": messages
     }
+
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
     if response.status_code != 200:
         print(f"Ошибка OpenAI: {response.status_code} {response.text}")
         return f"Ошибка OpenAI: {response.status_code}"
-    
+
     result = response.json()
     return result["choices"][0]["message"]["content"]
 
@@ -160,6 +161,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for key, char in characters.items():
         if user_message == char["name"]:
             user_characters[user_id] = key
+            user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
             await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
             return
 
@@ -167,10 +169,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     character_key = user_characters.get(user_id, "yulia")
     character_prompt = characters[character_key]["prompt"]
 
-    # Формируем prompt — без лишнего nsfw_text
-    full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters[character_key]['name']}:"
+    # Инициализация истории, если нет
+    user_histories.setdefault(user_id, [])
+
+    # Добавляем сообщение пользователя в историю
+    user_histories[user_id].append({"role": "user", "content": user_message})
+
     print(f"Получено сообщение: {user_message}")  
-    bot_response = get_openai_response(full_prompt)
+
+    # Получаем ответ GPT
+    bot_response = get_openai_response(character_prompt, user_histories[user_id])
+
+    # Добавляем ответ бота в историю
+    user_histories[user_id].append({"role": "assistant", "content": bot_response})
+
     await update.message.reply_text(bot_response)
 
 
