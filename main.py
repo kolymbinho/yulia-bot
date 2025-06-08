@@ -156,17 +156,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_message = update.message.text
 
-    # Обработка 18+ кнопок
-    if user_message == "🔞 Включить 18+ режим":
-        user_nsfw[user_id] = True
-        await update.message.reply_text("18+ режим включён.")
-        return
-
-    if user_message == "🚫 Выключить 18+ режим":
-        user_nsfw[user_id] = False
-        await update.message.reply_text("18+ режим выключён.")
-        return
-
     # Если выбрал персонажа
     for key, char in characters.items():
         if user_message == char["name"]:
@@ -178,13 +167,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     character_key = user_characters.get(user_id, "yulia")
     character_prompt = characters[character_key]["prompt"]
 
-    # Добавляем NSFW режим
-    nsfw_text = "Режим: 18+. Разрешено флиртовать, обсуждать сексуальные темы." if user_nsfw.get(user_id, False) else "Режим: обычный. Не использовать эротический контент."
-
-    full_prompt = f"{character_prompt}\n{nsfw_text}\nПользователь: {user_message}\n{characters[character_key]['name']}:"
+    # Формируем prompt — без лишнего nsfw_text
+    full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters[character_key]['name']}:"
     print(f"Получено сообщение: {user_message}")  
     bot_response = get_openai_response(full_prompt)
     await update.message.reply_text(bot_response)
+
 
 # Запуск
 if __name__ == "__main__":
