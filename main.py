@@ -103,8 +103,12 @@ characters = {
 
 # Для хранения выбранных персонажей
 user_characters = {}
+
 # Для хранения 18+ режима
 user_nsfw = {}
+
+# Для хранения истории сообщений
+user_histories = {}
 
 # GPT
 def get_openai_response(character_prompt, history):
