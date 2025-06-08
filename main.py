@@ -1,7 +1,8 @@
 import os
 import requests
 from dotenv import load_dotenv
-from telegram import Update
+from flask import Flask, request
+from telegram import Bot, Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 # Загружаем переменные из .env
@@ -75,7 +76,7 @@ characters = {
     }
 }
 
-# ==== ФУНКЦИЯ GPT ====
+# ==== GPT FUNCTION ====
 def get_openai_response(prompt):
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -95,30 +96,37 @@ def get_openai_response(prompt):
     result = response.json()
     return result["choices"][0]["message"]["content"]
 
-# ==== КОМАНДА /start ====
+# ==== TELEGRAM HANDLERS ====
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Я Бот с персонажами. Пока что активна Юля по умолчанию. Напиши что-нибудь!")
+    await update.message.reply_text("Привет! Я Юлия Бот на GPT-4o. Напиши мне что-нибудь!")
 
-# ==== ОБРАБОТКА СООБЩЕНИЙ ====
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-    # Пока по умолчанию Юля — потом сделаем выбор персонажа
+    # По умолчанию Юля
     character_prompt = characters["yulia"]["prompt"]
     full_prompt = f"{character_prompt}\nПользователь: {user_message}\n{characters['yulia']['name']}:"
     bot_response = get_openai_response(full_prompt)
     await update.message.reply_text(bot_response)
 
-# ==== ЗАПУСК ====
+# ==== SETUP FLASK + TELEGRAM ====
+app_flask = Flask(__name__)
+bot = Bot(token=TELEGRAM_TOKEN)
+
+application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+# Route for webhook
+@app_flask.route(f'/{TELEGRAM_TOKEN}', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), bot)
+    application.update_queue.put(update)
+    return 'ok'
+
+# Main run
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("Бот запущен...")
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=10000,
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
-    )
+    # Устанавливаем Webhook
+    bot.set_webhook(url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+    print("Webhook установлен!")
+    # Запускаем Flask
+    app_flask.run(host="0.0.0.0", port=10000)
