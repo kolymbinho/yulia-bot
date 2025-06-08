@@ -121,7 +121,7 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_m
 @app_flask.route(f'/{TELEGRAM_TOKEN}', methods=['POST'])
 def webhook():
     update = Update.de_json(request.get_json(force=True), bot)
-    application.update_queue.put(update)
+    application.update_queue.put_nowait(update)
     return 'ok'
 
 # Main run
