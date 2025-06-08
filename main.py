@@ -162,6 +162,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_message = update.message.text
 
+    # Авто-сброс истории и персонажа для новых пользователей
+    if user_id not in user_characters:
+        user_characters[user_id] = None
+    if user_id not in user_histories:
+        user_histories[user_id] = []
+
     # Если выбрал персонажа
     for key, char in characters.items():
         if user_message == char["name"]:
@@ -174,15 +180,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     character_key = user_characters.get(user_id, "yulia")
     character_prompt = characters[character_key]["prompt"]
 
-    # Инициализация истории, если нет
-    user_histories.setdefault(user_id, [])
-
     # Добавляем сообщение пользователя в историю
     user_histories[user_id].append({"role": "user", "content": user_message})
-
-    # ОГРАНИЧЕНИЕ истории (последние 10 сообщений)
-    if len(user_histories[user_id]) > 10:
-        user_histories[user_id] = user_histories[user_id][-10:]
 
     print(f"Получено сообщение: {user_message}")  
 
@@ -191,10 +190,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Добавляем ответ бота в историю
     user_histories[user_id].append({"role": "assistant", "content": bot_response})
-
-    # ОГРАНИЧЕНИЕ истории снова (последние 10 сообщений)
-    if len(user_histories[user_id]) > 10:
-        user_histories[user_id] = user_histories[user_id][-10:]
 
     await update.message.reply_text(bot_response)
 
