@@ -228,6 +228,8 @@ app.run_webhook(
     listen="0.0.0.0",
     port=int(os.getenv("PORT", 10000)),
     url_path=TELEGRAM_TOKEN,
-    webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    # Устанавливаем webhook (авто)
+WEBHOOK_FULL_URL = f"{WEBHOOK_URL}{'/' if not WEBHOOK_URL.endswith('/') else ''}{TELEGRAM_TOKEN}"
+
 )
 
