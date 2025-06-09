@@ -133,31 +133,29 @@ def get_openai_response(character_prompt, history):
 
 # /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-   # Генерация кнопок
+    # Кнопка кастомного архетипа — в начало, выделяется визуально
+    custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
 
-# Кнопка кастомного архетипа — в начало, выделяется визуально
-custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
+    # Бесплатные персонажи
+    free_buttons = [[char["name"]] for char in characters.values() if not char.get("is_nsfw", False) and not char.get("is_paid_assistant", False)]
 
-# Бесплатные персонажи
-free_buttons = [[char["name"]] for char in characters.values() if not char.get("is_nsfw", False) and not char.get("is_paid_assistant", False)]
+    # Платные ассистенты
+    assist_buttons = [[char["name"]] for char in characters.values() if char.get("is_paid_assistant", False)]
 
-# Платные ассистенты
-assist_buttons = [[char["name"]] for char in characters.values() if char.get("is_paid_assistant", False)]
+    # Платные 🔞 персонажи
+    nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
 
-# Платные 🔞 персонажи
-nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
+    # Собираем итоговую клавиатуру
+    keyboard = custom_button + free_buttons
 
-# Собираем итоговую клавиатуру
-keyboard = custom_button + free_buttons
+    if assist_buttons:
+        keyboard += [["---- Платные ассистенты ----"]] + assist_buttons
 
-if assist_buttons:
-    keyboard += [["---- Платные ассистенты ----"]] + assist_buttons
+    if nsfw_buttons:
+        keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
 
-if nsfw_buttons:
-    keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
-
-reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
-await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
+    await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
 
 
 
