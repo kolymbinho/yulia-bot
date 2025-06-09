@@ -5,6 +5,7 @@ services:
     plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python main.py"
+    postDeployCommand: bash post_deploy.sh
     autoDeploy: true
     envVars:
       - key: TELEGRAM_TOKEN
