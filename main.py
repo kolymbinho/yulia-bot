@@ -204,9 +204,23 @@ if __name__ == "__main__":
 
     print("Бот запущен! Используем Webhook:", WEBHOOK_URL)
 
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
-    )
+# Автоматический setWebhook
+setwebhook_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+
+try:
+    r = requests.get(setwebhook_url)
+    if r.status_code == 200:
+        print(f"[setWebhook] ✅ Webhook обновлён: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+    else:
+        print(f"[setWebhook] ❌ Ошибка {r.status_code}: {r.text}")
+except Exception as e:
+    print(f"[setWebhook] ❌ Исключение: {e}")
+
+# Запуск бота
+app.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.getenv("PORT", 10000)),
+    url_path=TELEGRAM_TOKEN,
+    webhook_url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+)
+
