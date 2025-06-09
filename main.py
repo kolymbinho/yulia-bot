@@ -209,25 +209,15 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Генерируем полный URL вебхука
+    # Формируем правильный WEBHOOK URL
     WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
-
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    # Устанавливаем Webhook вручную
-    response = requests.post(
-        f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook",
-        json={"url": WEBHOOK_FULL_URL}
-    )
-    if response.status_code == 200:
-        print(f"[setWebhook] ✅ Вебхук обновлён: {WEBHOOK_FULL_URL}")
-    else:
-        print(f"[setWebhook] ❌ Ошибка обновления Webhook: {response.status_code} {response.text}")
+    # Ставим вебхук (через API)
+    app.bot.set_webhook(url=WEBHOOK_FULL_URL)
+    print("[setWebhook] ✅ Вебхук обновлён:", WEBHOOK_FULL_URL)
 
-    # Запускаем Webhook — БЕЗ параметра webhook_url
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),
-        url_path=TELEGRAM_TOKEN
-    )
+    # Запускаем POLLING вместо run_webhook (чтобы не падал)
+    app.run_polling()
+
 
