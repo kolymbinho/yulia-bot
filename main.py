@@ -214,14 +214,17 @@ if __name__ == "__main__":
     WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    # Устанавливаем Webhook с await (чтобы не было warning)
-    asyncio.run(app.bot.set_webhook(url=WEBHOOK_FULL_URL))
+    # Функция для установки вебхука при запуске
+async def on_startup(app):
+    await app.bot.set_webhook(url=WEBHOOK_FULL_URL)
     print("[setWebhook] ✅ Вебхук обновлён:", WEBHOOK_FULL_URL)
 
-    # Запускаем run_webhook (правильный способ)
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=WEBHOOK_FULL_URL
-    )
+# Запуск бота с webhooks и автоматической установкой
+app.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.getenv("PORT", 10000)),
+    url_path=TELEGRAM_TOKEN,
+    webhook_url=WEBHOOK_FULL_URL,
+    on_startup=on_startup
+)
+
