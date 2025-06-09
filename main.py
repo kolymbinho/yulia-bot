@@ -200,7 +200,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Добавляем ответ бота в историю
     user_histories[user_id].append({"role": "assistant", "content": bot_response})
 
-        await update.message.reply_text(bot_response)
+       await update.message.reply_text(bot_response)
 
 
 # Команда /donate — отправляет пользователю инфу о поддержке
@@ -208,7 +208,7 @@ async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "💰 Поддержи проект и получи доступ к эксклюзивным архетипам или закажи своего персонажа:\n\n"
         "🔗 https://donatty.com/твой_ник_или_ссылка\n"
-        "или переведи на карту 💳 5375 xxxx xxxx xxxx\n\n"
+        "или переведи на карту 💳 5375 41XX XXXX XXXX\n\n"
         "После оплаты — напиши мне, и я всё активирую вручную 😉"
     )
 
