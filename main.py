@@ -162,23 +162,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_message = update.message.text
 
-    # Авто-сброс истории и персонажа для новых пользователей
-    if user_id not in user_characters:
-        user_characters[user_id] = None
-    if user_id not in user_histories:
-        user_histories[user_id] = []
-
     # Если выбрал персонажа
     for key, char in characters.items():
         if user_message == char["name"]:
             user_characters[user_id] = key
             user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
+
+            # Путь к аватарке
+            avatar_path = f"avatars/{key}.jpg"
+
+            # Проверяем если файл существует — отправляем
+            if os.path.exists(avatar_path):
+                with open(avatar_path, 'rb') as photo:
+                    await update.message.reply_photo(photo)
+
+            # Текст
             await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
             return
 
     # Если персонаж не выбран — Юля по умолчанию
     character_key = user_characters.get(user_id, "yulia")
     character_prompt = characters[character_key]["prompt"]
+
+    # Инициализация истории, если нет
+    user_histories.setdefault(user_id, [])
 
     # Добавляем сообщение пользователя в историю
     user_histories[user_id].append({"role": "user", "content": user_message})
