@@ -201,6 +201,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(bot_response)
 
 
+import asyncio  # обязательно ВВЕРХУ!
+
 # Запуск
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -212,10 +214,9 @@ if __name__ == "__main__":
     WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    # Запускаем Webhook (без asyncio.run!)
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=WEBHOOK_FULL_URL
-    )
+    # Ставим Webhook вручную — с await!
+    asyncio.run(app.bot.set_webhook(url=WEBHOOK_FULL_URL))
+    print("[setWebhook] ✅ Вебхук обновлён:", WEBHOOK_FULL_URL)
+
+    # Запускаем POLLING!
+    app.run_polling()
