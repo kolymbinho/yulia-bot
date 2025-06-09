@@ -212,23 +212,27 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("donate", donate))  # если добавил donate
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Генерируем правильный Webhook URL
+    # Генерация правильного Webhook URL
     WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    async def main():
+    # Устанавливаем webhook (единственный async)
+    async def set_webhook():
         await app.bot.set_webhook(url=WEBHOOK_FULL_URL)
         print("[setWebhook] ✅ Вебхук обновлён:", WEBHOOK_FULL_URL)
 
-        app.run_webhook(
-            listen="0.0.0.0",
-            port=int(os.getenv("PORT", 10000)),
-            url_path=TELEGRAM_TOKEN,
-            webhook_url=WEBHOOK_FULL_URL
-        )
+    asyncio.get_event_loop().run_until_complete(set_webhook())
 
-    asyncio.run(main())
+    # Запуск бота синхронно
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", 10000)),
+        url_path=TELEGRAM_TOKEN,
+        webhook_url=WEBHOOK_FULL_URL
+    )
+
 
 
