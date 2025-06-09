@@ -200,7 +200,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Добавляем ответ бота в историю
     user_histories[user_id].append({"role": "assistant", "content": bot_response})
 
-       await update.message.reply_text(bot_response)
+    await update.message.reply_text(bot_response)
 
 
 # Команда /donate — отправляет пользователю инфу о поддержке
