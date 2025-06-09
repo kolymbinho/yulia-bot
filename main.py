@@ -202,9 +202,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-# ВВЕРХУ ФАЙЛА добавить:
-import asyncio
-
 # Запуск
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
@@ -217,15 +214,11 @@ if __name__ == "__main__":
 
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    # Устанавливаем Webhook правильно (через await)
-    asyncio.run(app.bot.set_webhook(url=WEBHOOK_FULL_URL))
-    print(f"[setWebhook] ✅ Вебхук обновлён: {WEBHOOK_FULL_URL}")
-
-    # Запускаем Webhook
+    # Запускаем Webhook — встроенная установка webhook_url
     app.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 10000)),
-        url_path=TELEGRAM_TOKEN
+        url_path=TELEGRAM_TOKEN,
+        webhook_url=WEBHOOK_FULL_URL
     )
-
 
