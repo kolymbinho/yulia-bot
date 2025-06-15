@@ -196,28 +196,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    # Если выбрал персонажа
-for key, char in characters.items():
-    if user_message == char["name"]:
-        # 🔒 Проверка доступа к платным персонажам
-        if char.get("is_nsfw", False) or char.get("is_paid_assistant", False):
-            if user_id not in unlocked_chars or key not in unlocked_chars[user_id]:
-                await update.message.reply_text("🔒 Этот персонаж платный. Напиши /donate, чтобы получить доступ.")
-                return
+        # Если выбрал персонажа
+    for key, char in characters.items():
+        if user_message == char["name"]:
+            # 🔒 Проверка доступа к платным персонажам
+            if char.get("is_nsfw", False) or char.get("is_paid_assistant", False):
+                if user_id not in unlocked_chars or key not in unlocked_chars[user_id]:
+                    await update.message.reply_text("🔒 Этот персонаж платный. Напиши /donate, чтобы получить доступ.")
+                    return
 
-        user_characters[user_id] = key
-        user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
+            user_characters[user_id] = key
+            user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
 
-        # Путь к аватарке
-        avatar_path = f"avatars/{key}.jpg"
+            # Путь к аватарке
+            avatar_path = f"avatars/{key}.jpg"
+            if os.path.exists(avatar_path):
+                with open(avatar_path, 'rb') as photo:
+                    await update.message.reply_photo(photo)
 
-        # Проверяем если файл существует — отправляем
-        if os.path.exists(avatar_path):
-            with open(avatar_path, 'rb') as photo:
-                await update.message.reply_photo(photo)
-
-        await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
-        return
+            await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
+            return
 
     # Если персонаж не выбран — Юля по умолчанию
     character_key = user_characters.get(user_id, "yulia")
