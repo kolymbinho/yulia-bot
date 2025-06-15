@@ -201,9 +201,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if user_message == char["name"]:
             # 🔒 Проверка доступа к платным персонажам
             if char.get("is_nsfw", False) or char.get("is_paid_assistant", False):
-                if user_id not in unlocked_chars or key not in unlocked_chars[user_id]:
-                    await update.message.reply_text("🔒 Этот персонаж платный. Напиши /donate, чтобы получить доступ.")
-                    return
+    if user_id != ADMIN_ID:
+        if user_id not in unlocked_chars or key not in unlocked_chars[user_id]:
+            await update.message.reply_text("🔒 Этот персонаж платный. Напиши /donate, чтобы получить доступ.")
+            return
 
             user_characters[user_id] = key
             user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
