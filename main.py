@@ -127,9 +127,16 @@ user_profiles = {}  # user_id → {"name": ..., "gender": ..., "age": ...}
 # Этап анкеты, на котором находится пользователь
 user_profile_stage = {}  # user_id → "name" | "gender" | "age"
 
+from datetime import datetime
+
+# Ограничение сообщений в день
+user_daily_limit = {}  # user_id → {"date": "2025-06-09", "count": 7}
+DAILY_LIMIT = 15
 
 # GPT
-def get_openai_response(character_prompt, history):
+def get_openai_response(character_prompt, history, user_name=None):
+    if user_name:
+        character_prompt = f"Обращайся к собеседнику по имени — {user_name}. " + character_prompt
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
@@ -181,8 +188,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, skip_profile
 # Сообщения
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    print(f"[DEBUG] User ID: {user_id}")
     user_message = update.message.text
+    print(f"[DEBUG] User ID: {user_id} | Message: {user_message}")
+
+    # 🔒 Проверка лимита сообщений в день
+    today = datetime.now().strftime("%Y-%m-%d")
+    if user_id not in user_daily_limit:
+        user_daily_limit[user_id] = {"date": today, "count": 0}
+    elif user_daily_limit[user_id]["date"] != today:
+        user_daily_limit[user_id] = {"date": today, "count": 0}
+
+    if user_daily_limit[user_id]["count"] >= DAILY_LIMIT:
+        await update.message.reply_text("🛑 У тебя закончился лимит бесплатных сообщений на сегодня.\n\nНапиши /donate, чтобы получить безлимит 🔓")
+        return
 
     # ⛓ Этап анкеты
     if user_id in user_profile_stage:
@@ -223,17 +241,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
     # Пользователь описал идею кастомного персонажа
     if user_characters.get(user_id) == "custom_request":
         idea = user_message.strip()
-
-        # Уведомление админу о кастомном заказе
         await context.bot.send_message(
             chat_id=ADMIN_ID,
             text=f"📬 Новый заказ персонажа от пользователя {user_id}:\n{idea}"
         )
-
         await update.message.reply_text(
             f"💡 Круто! Ты хочешь: «{idea}»\n\n"
             f"Чтобы создать такого персонажа, нужна оплата 💳\n"
@@ -241,11 +255,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
-            # Если выбрал персонажа
+    # Если выбрал персонажа
     for key, char in characters.items():
         if user_message == char["name"]:
-            # 🔒 Проверка доступа к платным персонажам
             if char.get("is_nsfw", False) or char.get("is_paid_assistant", False):
                 if user_id != ADMIN_ID:
                     if user_id not in unlocked_chars or key not in unlocked_chars[user_id]:
@@ -253,38 +265,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         return
 
             user_characters[user_id] = key
-            user_histories[user_id] = []  # Сбросить историю при выборе нового персонажа
+            user_histories[user_id] = []  # Сброс истории
 
-            # Путь к аватарке
             avatar_path = f"avatars/{key}.jpg"
-
-            # Проверяем если файл существует — отправляем
             if os.path.exists(avatar_path):
                 with open(avatar_path, 'rb') as photo:
                     await update.message.reply_photo(photo)
 
-            # Текст
             await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
             return
 
-
-    # Если персонаж не выбран — Юля по умолчанию
+    # Получаем текущего персонажа (по умолчанию Юля)
     character_key = user_characters.get(user_id, "yulia")
     character_prompt = characters[character_key]["prompt"]
 
-    # Инициализация истории, если нет
     user_histories.setdefault(user_id, [])
-
-    # Добавляем сообщение пользователя в историю
     user_histories[user_id].append({"role": "user", "content": user_message})
 
-    print(f"Получено сообщение: {user_message}")  
-
-    # Получаем ответ GPT
-    bot_response = get_openai_response(character_prompt, user_histories[user_id])
-
-    # Добавляем ответ бота в историю
+    user_name = user_profiles.get(user_id, {}).get("name")
+    bot_response = get_openai_response(character_prompt, user_histories[user_id], user_name)
     user_histories[user_id].append({"role": "assistant", "content": bot_response})
+
+    # ✅ Увеличиваем счётчик сообщений
+    user_daily_limit[user_id]["count"] += 1
 
     await update.message.reply_text(bot_response)
 
