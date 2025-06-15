@@ -245,6 +245,35 @@ async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# ⛓ Хранилище разблокированных персонажей (user_id → set(character_keys))
+unlocked_chars = {}
+
+# Команда для ручной разблокировки платного персонажа по ID
+async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Эта команда доступна только админу.")
+        return
+
+    args = context.args
+    if len(args) != 2:
+        await update.message.reply_text("⚠️ Использование: /разблокировать [ключ_персонажа] [user_id]\n\nПример: /разблокировать diana 8155706934")
+        return
+
+    character_key = args[0].lower()
+    target_user_id = int(args[1])
+
+    if character_key not in characters:
+        await update.message.reply_text("❌ Такого персонажа нет.")
+        return
+
+    if target_user_id not in unlocked_chars:
+        unlocked_chars[target_user_id] = set()
+
+    unlocked_chars[target_user_id].add(character_key)
+
+    await update.message.reply_text(f"✅ Персонаж {characters[character_key]['name']} разблокирован для пользователя {target_user_id}.")
+
+
 import asyncio  # обязательно ВВЕРХУ!
 
 # Запуск
@@ -253,28 +282,27 @@ if __name__ == "__main__":
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
+    # Команды
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("donate", donate))  # если добавил donate
+    app.add_handler(CommandHandler("donate", donate))
+    app.add_handler(CommandHandler("разблокировать", unlock))
+
+    # Сообщения
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Генерация правильного Webhook URL
+    # Webhook
     WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
-    # Устанавливаем webhook (единственный async)
     async def set_webhook():
         await app.bot.set_webhook(url=WEBHOOK_FULL_URL)
         print("[setWebhook] ✅ Вебхук обновлён:", WEBHOOK_FULL_URL)
 
     asyncio.get_event_loop().run_until_complete(set_webhook())
 
-    # Запуск бота синхронно
     app.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 10000)),
         url_path=TELEGRAM_TOKEN,
         webhook_url=WEBHOOK_FULL_URL
     )
-
-
-
