@@ -102,16 +102,23 @@ characters = {
     }
 }
 
+# 🧠 Хранение пользовательских данных
 
-
-# Для хранения выбранных персонажей
+# Выбранный персонаж
 user_characters = {}
 
-# Для хранения 18+ режима
+# Активирован ли режим 18+
 user_nsfw = {}
 
-# Для хранения истории сообщений
+# История сообщений
 user_histories = {}
+
+# Профиль пользователя: имя, пол, возраст
+user_profiles = {}  # user_id → {"name": ..., "gender": ..., "age": ...}
+
+# Этап анкеты, на котором находится пользователь
+user_profile_stage = {}  # user_id → "name" | "gender" | "age"
+
 
 # GPT
 def get_openai_response(character_prompt, history):
@@ -134,31 +141,26 @@ def get_openai_response(character_prompt, history):
     result = response.json()
     return result["choices"][0]["message"]["content"]
 
-# /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 Привет! Я бот-компаньон с разными персонажами: от заботливой подруги до дерзкой демонессы.\n\n"
-        "✨ Ты можешь выбрать любого персонажа или даже заказать собственного!\n"
-        "🔓 Платные и 🔞 персонажи доступны после поддержки проекта через /donate"
-    )
-    # Кнопка кастомного архетипа — в начало, выделяется визуально
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, skip_profile=False):
+    user_id = update.effective_user.id
+
+    if not skip_profile:
+        user_profile_stage[user_id] = "name"
+        await update.message.reply_text(
+            "👋 Привет! Я бот-компаньон с разными персонажами: от няши до психолога.\n\n"
+            "Давай начнём с небольшой анкеты.\nКак тебя зовут?"
+        )
+        return
+
+    # Показ клавиатуры персонажей после анкеты
     custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
-
-    # Бесплатные персонажи
     free_buttons = [[char["name"]] for char in characters.values() if not char.get("is_nsfw", False) and not char.get("is_paid_assistant", False)]
-
-    # Платные ассистенты
     assist_buttons = [[char["name"]] for char in characters.values() if char.get("is_paid_assistant", False)]
-
-    # Платные 🔞 персонажи
     nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
 
-    # Собираем итоговую клавиатуру
     keyboard = custom_button + free_buttons
-
     if assist_buttons:
         keyboard += [["---- Платные ассистенты ----"]] + assist_buttons
-
     if nsfw_buttons:
         keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
 
@@ -167,11 +169,41 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
 # Сообщения
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     print(f"[DEBUG] User ID: {user_id}")
     user_message = update.message.text
+
+    # ⛓ Этап анкеты
+    if user_id in user_profile_stage:
+        stage = user_profile_stage[user_id]
+
+        if stage == "name":
+            user_profiles[user_id] = {"name": user_message}
+            user_profile_stage[user_id] = "gender"
+            await update.message.reply_text("😊 Приятно! А теперь скажи, ты парень или девушка?")
+            return
+
+        elif stage == "gender":
+            user_profiles[user_id]["gender"] = user_message
+            user_profile_stage[user_id] = "age"
+            await update.message.reply_text("📅 Отлично! И сколько тебе лет?")
+            return
+
+        elif stage == "age":
+            user_profiles[user_id]["age"] = user_message
+            del user_profile_stage[user_id]  # анкета завершена
+
+            await update.message.reply_text(
+                f"✨ Спасибо, {user_profiles[user_id]['name']}!\n"
+                "Теперь выбери персонажа, с кем хочешь пообщаться 👇"
+            )
+
+            await start(update, context, skip_profile=True)
+            return
+
     # Обработка кнопки "✨🛠 Заказать своего персонажа ✨"
     if user_message == "✨🛠 Заказать своего персонажа ✨":
         user_characters[user_id] = "custom_request"  # Включаем спец-режим
@@ -182,6 +214,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💬 Пример: «Хочу девушку-киборга, которая говорит как ведьма из Skyrim»"
         )
         return
+
 
     # Пользователь описал идею кастомного персонажа
     if user_characters.get(user_id) == "custom_request":
