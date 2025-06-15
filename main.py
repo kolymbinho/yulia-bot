@@ -11,6 +11,9 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL").strip()
 
+# Твой Telegram ID для уведомлений
+ADMIN_ID = 397749139  # ← сюда свой ID из лога
+
 # ХАРАКТЕРЫ
 characters = {
     "dasha": {
