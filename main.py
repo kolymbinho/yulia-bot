@@ -162,6 +162,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Сообщения
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    print(f"[DEBUG] User ID: {user_id}")
     user_message = update.message.text
     # Обработка кнопки "✨🛠 Заказать своего персонажа ✨"
     if user_message == "✨🛠 Заказать своего персонажа ✨":
