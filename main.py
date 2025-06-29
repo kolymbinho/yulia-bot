@@ -166,21 +166,35 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, skip_profile
             "Давай начнём с небольшой анкеты.\nКак тебя зовут?"
         )
         return
+# Показ клавиатуры персонажей после анкеты
+custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
 
-    # Показ клавиатуры персонажей после анкеты
-    custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
-    free_buttons = [[char["name"]] for char in characters.values() if not char.get("is_nsfw", False) and not char.get("is_paid_assistant", False)]
-    assist_buttons = [[char["name"]] for char in characters.values() if char.get("is_paid_assistant", False)]
-    nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
+free_buttons = [
+    ["🆓 Даша — заботливая"],
+    ["🆓 Вика — романтичная"],
+    ["🆓 Катя — подруга детства"],
+    ["🆓 Оксана — сельская"]
+]
 
-    keyboard = custom_button + free_buttons
-    if assist_buttons:
-        keyboard += [["---- Платные ассистенты ----"]] + assist_buttons
-    if nsfw_buttons:
-        keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
+assist_buttons = [
+    ["🔓 Ева — ИИ-компаньон"],
+    ["🔓 Ира — психолог"]
+]
 
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
-    await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
+nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
+
+keyboard = custom_button + free_buttons
+
+if assist_buttons:
+    keyboard += [["---- 🔓 Платные ассистенты ----"]] + assist_buttons
+
+if nsfw_buttons:
+    keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
+
+reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
+await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
+
+
 
 
 
