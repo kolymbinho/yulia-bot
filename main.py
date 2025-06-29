@@ -273,9 +273,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Если выбрал персонажа
+      # Если выбрал персонажа
+    cleaned_message = user_message.replace("🆓 ", "").replace("🔓 ", "").replace("🍑 ", "").strip()
+
     for key, char in characters.items():
-        if user_message == char["name"]:
+        if cleaned_message == char["name"]:
             # 🔒 Проверка доступа к платным персонажам
             if char.get("is_nsfw", False) or char.get("is_paid_assistant", False):
                 if user_id != ADMIN_ID:
@@ -387,7 +389,7 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Webhook
-    WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    WEBHOOK_FULL_URL = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"for key, char in characters.items():
     print("Бот запущен! Используем Webhook:", WEBHOOK_FULL_URL)
 
     async def set_webhook():
