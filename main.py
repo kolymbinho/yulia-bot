@@ -166,36 +166,34 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, skip_profile
             "Давай начнём с небольшой анкеты.\nКак тебя зовут?"
         )
         return
-# Показ клавиатуры персонажей после анкеты
-custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
 
-free_buttons = [
-    ["🆓 Даша — заботливая"],
-    ["🆓 Вика — романтичная"],
-    ["🆓 Катя — подруга детства"],
-    ["🆓 Оксана — сельская"]
-]
+    # Показ клавиатуры персонажей после анкеты
+    custom_button = [["✨🛠 Заказать своего персонажа ✨"]]
 
-assist_buttons = [
-    ["🔓 Ева — ИИ-компаньон"],
-    ["🔓 Ира — психолог"]
-]
+    free_buttons = [
+        ["🆓 Даша — заботливая"],
+        ["🆓 Вика — романтичная"],
+        ["🆓 Катя — подруга детства"],
+        ["🆓 Оксана — сельская"]
+    ]
 
-nsfw_buttons = [[char["name"]] for char in characters.values() if char.get("is_nsfw", False)]
+    assist_buttons = [
+        ["🔓 Ева — ИИ-компаньон"],
+        ["🔓 Ира — психолог"]
+    ]
 
-keyboard = custom_button + free_buttons
+    nsfw_buttons = [[f"🍑 {char['name']}"] for char in characters.values() if char.get("is_nsfw", False)]
 
-if assist_buttons:
-    keyboard += [["---- 🔓 Платные ассистенты ----"]] + assist_buttons
+    keyboard = custom_button + free_buttons
 
-if nsfw_buttons:
-    keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
+    if assist_buttons:
+        keyboard += [["---- 🔓 Платные ассистенты ----"]] + assist_buttons
 
-reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
-await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
+    if nsfw_buttons:
+        keyboard += [["---- 🔞 Платные персонажи ----"]] + nsfw_buttons
 
-
-
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
+    await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
 
 
 
