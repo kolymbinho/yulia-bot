@@ -1,4 +1,3 @@
-# ✅ ОБНОВЛЕННЫЙ main.py с разделением `name` и `display`
 import re
 import os
 import requests
@@ -126,7 +125,6 @@ characters = {
     }
 }
 
-
 # Очистка prompt'ов от дублирующихся фраз
 for char in characters.values():
     char["prompt"] = re.sub(
@@ -154,22 +152,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE, skip_profile
     user_id = update.effective_user.id
     if not skip_profile:
         user_profile_stage[user_id] = "name"
-        await update.message.reply_text(
-            "👋 Привет! Я бот-компаньон с разными персонажами.\nКак тебя зовут?")
+        await update.message.reply_text("\U0001f44b Привет! Я бот-компаньон с разными персонажами.\nКак тебя зовут?")
         return
 
-    keyboard = [[char["display"]] for char in characters.values()]
+    keyboard = [[char["display"]] for char in characters.values()] + [["\u2728 Заказать персонажа (200 грн)"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
     await update.message.reply_text("Выбери персонажа:", reply_markup=reply_markup)
 
 async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 2:
-        await update.message.reply_text("⚠️ Использование: /unlock [ключ_персонажа] [user_id]")
+        await update.message.reply_text("\u26a0\ufe0f Использование: /unlock [ключ_персонажа] [user_id]")
         return
     key, uid = args[0].lower(), int(args[1])
     unlocked_chars.setdefault(uid, set()).add(key)
-    await update.message.reply_text(f"✅ Персонаж {characters[key]['name']} разблокирован для {uid}.")
+    await update.message.reply_text(f"\u2705 Персонаж {characters[key]['name']} разблокирован для {uid}.")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -205,25 +202,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await start(update, context, skip_profile=True)
         return
 
-    # 👉 Заказ персонажа (если хочешь)
-    if msg.startswith("✨"):
-        await update.message.reply_text("🎨 Напиши, какого персонажа хочешь.")
+    if msg.lower() in ["заказать персонажа", "\u2728 заказать персонажа (200 грн)"]:
+        await update.message.reply_text(
+            "\U0001f9e0 Заказ собственного персонажа стоит *200 грн*.\n\n"
+            "Отправь идею персонажа и никнейм, а затем переведи *200 грн* на карту:\n"
+            "`4441 1110 6118 4036`\n\n"
+            "После оплаты отправь скрин, и мы создадим уникального собеседника для тебя 🔥",
+            parse_mode="Markdown")
         return
 
     for key, char in characters.items():
         if msg == char["display"]:
             if (char["is_paid_assistant"] or char["is_nsfw"]) and user_id != ADMIN_ID:
                 if key not in unlocked_chars.get(user_id, set()):
-                    await update.message.reply_text("🔒 Этот персонаж платный. Чтобы разблокировать — напиши /unlock [ключ] [id]")
+                    await update.message.reply_text(
+                        f"\U0001f512 Этот персонаж платный: *{char['name']}*\n\n"
+                        f"\U0001f4b3 Чтобы разблокировать — отправь *50 грн* на карту:\n"
+                        f"`4441 1110 6118 4036`\n\n"
+                        f"\U0001f4e9 После оплаты отправь скрин и выполни команду:\n"
+                        f"`/unlock {key} {user_id}`\n\n"
+                        f"\U0001f4cc Чтобы заказать нового уникального персонажа — нажми:\n✨ Заказать персонажа (200 грн)",
+                        parse_mode="Markdown")
                     return
             user_characters[user_id] = key
             user_histories[user_id] = []
-            await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
+            await update.message.reply_text(f"\u2705 Персонаж выбран: {char['name']}.")
             return
 
     char_key = user_characters.get(user_id)
     if not char_key:
-        await update.message.reply_text("👉 Сначала выбери персонажа из списка.")
+        await update.message.reply_text("\u261e Сначала выбери персонажа из списка.")
         return
 
     prompt = characters[char_key]["prompt"]
