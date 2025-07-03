@@ -195,8 +195,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🛑 У тебя закончился лимит бесплатных сообщений на сегодня.\n\nНапиши /donate, чтобы получить безлимит 🔓")
         return
 
-    if user_id in user_profile_stage:
-        return
+        if user_id in user_profile_stage:
+        stage = user_profile_stage[user_id]
+        if stage == "name":
+            name = user_message.strip()
+            user_profiles[user_id] = {"name": name}
+            user_profile_stage[user_id] = "gender"
+            await update.message.reply_text("А теперь скажи, ты мальчик или девочка?")
+            return
+        elif stage == "gender":
+            gender = user_message.strip().lower()
+            if gender in ["мальчик", "девочка"]:
+                user_profiles[user_id]["gender"] = gender
+                del user_profile_stage[user_id]
+                await update.message.reply_text("✅ Анкета заполнена! Теперь выбери персонажа из списка 👇")
+                await start(update, context, skip_profile=True)
+            else:
+                await update.message.reply_text("Пожалуйста, напиши просто: мальчик или девочка.")
+            return
 
     if user_message == "✨🛠 Заказать своего персонажа ✨":
         await update.message.reply_text(
@@ -218,6 +234,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "❓ Чтобы узнать свой ID, напиши /id"
         )
         return
+
 
     cleaned_message = user_message.replace("🆓 ", "").replace("🔓 ", "").replace("🍑 ", "").strip()
 
