@@ -111,6 +111,7 @@ characters = {
         "is_paid_assistant": False
     }
 }
+import re
 
 for char in characters.values():
     char["prompt"] = re.sub(
@@ -268,7 +269,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f"Персонаж выбран: {char['name']}. Теперь можешь писать.")
             return
 
-    character_key = user_characters.get(user_id, "yulia")
+    character_key = user_characters.get(user_id)
+    if not character_key:
+        await update.message.reply_text("👉 Пожалуйста, сначала выбери персонажа из списка.")
+        return
+
     character_prompt = characters[character_key]["prompt"]
     user_histories.setdefault(user_id, [])
     user_histories[user_id].append({"role": "user", "content": user_message})
