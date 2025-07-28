@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Твой токен сюда (без кавычек)
-BOT_TOKEN=7307123618:AAEMGpYkprJoc0Om7T4T33s8PFlbC-0xHcU
+BOT_TOKEN=7307123618:AAHJz5fRZRIu9rnEsdSPeaM24Fnj1S-EKiU
 
 # Твой вебхук (из ENV)
 WEBHOOK_URL="https://yulia-bot-iplb.onrender.com"
