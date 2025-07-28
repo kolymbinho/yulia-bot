@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Твой токен сюда (без кавычек)
-BOT_TOKEN=7307123618:AAHJz5fRZRIu9rnEsdSPeaM24Fnj1S-EKiU
+# Получаем токен и вебхук из переменных среды (Render Environment)
+BOT_TOKEN=$TELEGRAM_TOKEN
+WEBHOOK_URL=$RENDER_URL
 
-# Твой вебхук (из ENV)
-WEBHOOK_URL="https://yulia-bot-iplb.onrender.com"
-
-# Отправляем запрос на установку webhook
-curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WEBHOOK_URL/$BOT_TOKEN
+# Устанавливаем webhook
+curl -s -X POST https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WEBHOOK_URL
 
 echo "Webhook обновлён!"
